@@ -14,7 +14,9 @@ private:
 	void act_upon_connection(void);
 
 	//void input_validation(std::string& input);
-	void input_validation(/*const boost::system::error_code& error, size_t bytes*/);
+	void input_validation(const boost::system::error_code& error, size_t bytes);
+
+	size_t getFileLength(std::fstream& file);
 
 	void input_response(bool isInputOk);
 	std::string generateTextResponse(bool);
@@ -28,5 +30,6 @@ private:
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::ip::tcp::socket socket;
 
+	size_t size;
 	std::string message;
 };
