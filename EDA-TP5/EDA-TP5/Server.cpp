@@ -68,7 +68,7 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 void Server::connection_callback(const boost::system::error_code& error)
 {
 	if (!error)
-		socket.async_receive
+		socket.async_read_some
 		(
 			boost::asio::buffer(mess, MAXSIZE),
 			boost::bind
@@ -104,7 +104,8 @@ std::string make_daytime_string(bool plusThirty) {
 }
 
 void Server::input_response(bool isInputOk) {
-	std::fstream page("pag.html");
+	std::fstream page("page.html");
+
 	if (!page.is_open())
 		return;
 
@@ -122,8 +123,7 @@ void Server::input_response(bool isInputOk) {
 	}
 	response += "\r\n";
 
-	boost::asio::async_write(
-		socket,
+	socket.async_write_some(
 		boost::asio::buffer(response),
 		boost::bind(&Server::sending_callback, this, boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred));
