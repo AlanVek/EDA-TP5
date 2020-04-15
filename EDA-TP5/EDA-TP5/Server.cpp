@@ -6,7 +6,8 @@
 #include <fstream>
 
 using boost::asio::ip::tcp;
-
+#define HOST (std::string) "127.0.0.1"
+#define HOST2 (std::string) "192.168.1.35"
 #define PATH (std::string) "/img"
 #define FILENAME  "page.html"
 
@@ -61,7 +62,7 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 		std::string message(mess);
 
 		//Validator has the http protocol form.
-		std::string validator = "GET " + PATH + " HTTP/1.1\r\nHost: 127.0.0.1\r\n";
+		std::string validator = "GET " + PATH + " HTTP/1.1\r\nHost: " + HOST + "\r\n";
 		bool isInputOk = false;
 
 		//If there's been a match at the beggining of the request...
@@ -176,7 +177,7 @@ std::string Server::generateTextResponse(bool isInputOk) {
 	std::string response;
 	if (isInputOk) {
 		response =
-			"HTTP/1.1 200 OK\r\nDate:" + date + "\r\nLocation: 127.0.0.1" +
+			"HTTP/1.1 200 OK\r\nDate:" + date + "\r\nLocation: " + HOST +
 			PATH + "\r\nCache-Control: max-age=30\r\nExpires:" +
 			datePlusThirty +
 			"\r\nContent-Length:" + std::to_string(size) +
@@ -184,7 +185,7 @@ std::string Server::generateTextResponse(bool isInputOk) {
 	}
 	else {
 		response =
-			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: 127.0.0.1" +
+			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + HOST +
 			PATH + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
 			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n";
 	}
