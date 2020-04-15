@@ -1,5 +1,4 @@
 #pragma once
-
 #include <boost/asio.hpp>
 #include <string>
 
@@ -13,7 +12,7 @@ public:
 	~Server();
 private:
 	void wait_for_connection(void);
-	void act_upon_connection(void);
+	void closeConnection(void);
 
 	//void input_validation(std::string& input);
 	void input_validation(const boost::system::error_code& error, size_t bytes);
