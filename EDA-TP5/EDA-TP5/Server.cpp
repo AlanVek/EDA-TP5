@@ -147,7 +147,7 @@ void Server::input_response(bool isInputOk) {
 		ss << page.rdbuf();
 		response += ss.str();
 	}
-	response += "\r\n";
+	response += "\r\n\r\n";
 
 	/*Sets socket to write (send to client).*/
 	socket.async_write_some
@@ -177,17 +177,17 @@ std::string Server::generateTextResponse(bool isInputOk) {
 	std::string response;
 	if (isInputOk) {
 		response =
-			"HTTP/1.1 200 OK\r\nDate:" + date + "\r\nLocation: " + HOST +
+			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + HOST +
 			PATH + "\r\nCache-Control: max-age=30\r\nExpires:" +
 			datePlusThirty +
-			"\r\nContent-Length:" + std::to_string(size) +
-			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n";
+			"Content-Length:" + std::to_string(size) +
+			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
 	}
 	else {
 		response =
 			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + HOST +
 			PATH + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
-			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n";
+			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
 	}
 
 	return response;
