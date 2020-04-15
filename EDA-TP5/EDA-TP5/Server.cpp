@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <boost\bind.hpp>
+#include <boost/any.hpp>
 #include <chrono>
 #include <fstream>
 
@@ -39,7 +40,6 @@ void Server::wait_for_connection()
 		return;
 	}
 	acceptor.async_accept(socket, boost::bind(&Server::connection_callback, this, boost::asio::placeholders::error));
-	//socket.async_receive(boost::asio::buffer(message), boost::bind(&Server::input_validation, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 }
 
 void Server::act_upon_connection() {
@@ -51,33 +51,34 @@ void Server::act_upon_connection() {
 
 void Server::input_validation(const boost::system::error_code& error, size_t bytes) {
 	if (!error) {
-		std::cout << "GET: " + message << std::endl;
-		std::cout << "Validating input" << std::endl;
-		std::string validator = "GET " + PATH + "  HTTP/1.1 \r\nHost: 127.0.0.1 \r\n";
-		std::cout << "Validator created\n";
+		std::string message(mess);
+		std::string validator = "GET " + PATH + " HTTP/1.1\r\nHost: 127.0.0.1\r\n";
 		bool isInputOk = false;
 
-		std::cout << message << std::endl;
 		if (message.find(validator) == 0) {
-			if (message.length() > validator.length() && message[message.length() - 1] == '\r' && message[message.length()] == '\n')
+			if (message.length() > validator.length() && message[message.length() - 2] == '\r' && message[message.length() - 1] == '\n')
 				isInputOk = true;
 		}
 
-		std::cout << "Message run. Calling input response.\n";
-
 		input_response(isInputOk);
 	}
-
 	else
 		std::cout << error.message() << std::endl;
 }
 void Server::connection_callback(const boost::system::error_code& error)
 {
-	if (!error) {
-		socket.async_receive(boost::asio::buffer(message), boost::bind(&Server::input_validation, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+	if (!error)
+		socket.async_receive
+		(
+			boost::asio::buffer(mess, MAXSIZE),
+			boost::bind
+			(
+				&Server::input_validation,
+				this, boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred
+			)
+		);
 
-		//socket.receive(boost::asio::buffer(message));
-	}
 	else
 		std::cout << error.message() << std::endl;
 }
@@ -103,7 +104,6 @@ std::string make_daytime_string(bool plusThirty) {
 }
 
 void Server::input_response(bool isInputOk) {
-	std::cout << "Inside input response\n";
 	std::cout << isInputOk << std::endl;
 	std::fstream page("pag.html");
 	if (!page.is_open())
@@ -111,26 +111,19 @@ void Server::input_response(bool isInputOk) {
 
 	size = getFileLength(page);
 	std::string response = generateTextResponse(isInputOk);
-	std::cout << response << std::endl;
-
-	std::cout << "Async writing\n";
-
+	boost::asio::streambuf buf;
+	buf.prepare(size);
 	socket.send(boost::asio::buffer(response));
-	/*boost::asio::async_write(
-		socket,
-		boost::asio::buffer(response),
+	/*boost::asio::async_write(std::move(page),
 		boost::bind(&Server::sending_callback, this, boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred)*/
 			//);
-
-	std::cout << "Checking for file\n";
 
 	if (isInputOk) {
 		std::ostringstream ss;
 		ss << page.rdbuf();
 		response = ss.str();
 
-		std::cout << "Async writing file.\n";
 		/*boost::asio::async_write(
 			socket,
 			boost::asio::buffer(response),
@@ -140,7 +133,6 @@ void Server::input_response(bool isInputOk) {
 		socket.send(boost::asio::buffer(response));
 	}
 	response = "\r\n";
-	std::cout << "Writing end of statement.\n";
 
 	/*boost::asio::async_write(
 		socket,
@@ -153,26 +145,24 @@ void Server::input_response(bool isInputOk) {
 }
 
 std::string Server::generateTextResponse(bool isInputOk) {
-	std::cout << "Generating text response\n";
 	std::string date = make_daytime_string(false);
 	std::string datePlusThirty = make_daytime_string(true);
 	std::string response;
 	if (isInputOk) {
 		response =
-			"HTTP/1.1 200 OK \r\nDate:" + date + " \r\nLocation: 127.0.0.1" +
-			PATH + " \r\nCache-Control: max-age=30 \r\nExpires:" +
+			"HTTP/1.1 200 OK\r\nDate:" + date + "\r\nLocation: 127.0.0.1" +
+			PATH + "\r\nCache-Control: max-age=30\r\nExpires:" +
 			datePlusThirty +
-			" \r\nContent-Length:" + std::to_string(size) +
-			" \r\nContent-Type: text/html; charset=iso-8859-1 \r\n";
+			"\r\nContent-Length:" + std::to_string(size) +
+			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n";
 	}
 	else {
 		response =
-			"HTTP/1.1 200 404 Not Found \r\nDate:" + date + "Location: 127.0.0.1" +
+			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: 127.0.0.1" +
 			PATH + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
 			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n";
 	}
 
-	std::cout << "Text response generated.\n";
 	return response;
 }
 

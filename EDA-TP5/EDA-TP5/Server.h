@@ -3,6 +3,8 @@
 #include <boost/asio.hpp>
 #include <string>
 
+#define MAXSIZE 1000
+
 class Server
 {
 public:
@@ -31,5 +33,5 @@ private:
 	boost::asio::ip::tcp::socket socket;
 
 	size_t size;
-	std::string message;
+	char mess[MAXSIZE];
 };
