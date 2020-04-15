@@ -34,4 +34,5 @@ private:
 
 	size_t size;
 	char mess[MAXSIZE];
+	std::string response;
 };

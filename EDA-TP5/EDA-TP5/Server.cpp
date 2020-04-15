@@ -104,42 +104,30 @@ std::string make_daytime_string(bool plusThirty) {
 }
 
 void Server::input_response(bool isInputOk) {
-	std::cout << isInputOk << std::endl;
 	std::fstream page("pag.html");
 	if (!page.is_open())
 		return;
 
 	size = getFileLength(page);
-	std::string response = generateTextResponse(isInputOk);
-	boost::asio::streambuf buf;
-	buf.prepare(size);
-	socket.send(boost::asio::buffer(response));
-	/*boost::asio::async_write(std::move(page),
-		boost::bind(&Server::sending_callback, this, boost::asio::placeholders::error,
-			boost::asio::placeholders::bytes_transferred)*/
-			//);
+	response = generateTextResponse(isInputOk);
+
+	//socket.send(boost::asio::buffer(response));
 
 	if (isInputOk) {
 		std::ostringstream ss;
 		ss << page.rdbuf();
-		response = ss.str();
+		response += ss.str();
 
-		/*boost::asio::async_write(
-			socket,
-			boost::asio::buffer(response),
-			boost::bind(&Server::sending_callback, this, boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred)
-		);*/
-		socket.send(boost::asio::buffer(response));
+		//socket.send(boost::asio::buffer(response));
 	}
-	response = "\r\n";
+	response += "\r\n";
 
-	/*boost::asio::async_write(
+	boost::asio::async_write(
 		socket,
 		boost::asio::buffer(response),
 		boost::bind(&Server::sending_callback, this, boost::asio::placeholders::error,
-			boost::asio::placeholders::bytes_transferred));*/
-	socket.send(boost::asio::buffer(response));
+			boost::asio::placeholders::bytes_transferred));
+	//socket.send(boost::asio::buffer(response));
 	act_upon_connection();
 	wait_for_connection();
 }
