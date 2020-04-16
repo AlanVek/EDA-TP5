@@ -4,14 +4,14 @@
 #include <curl/easy.h>
 #include <string>
 
-#define HOST (const char*)"127.0.0.1/img"
-//#define PATH (std::string)"/img"
+#define HOST (std::string)"127.0.0.1"
+#define PATH (std::string) "/img"
 #define PORT 80
 
 class Client
 {
 public:
-	Client(std::string host_ = HOST, std::string path_ = "lala", int port_ = PORT);
+	Client(std::string path_ = PATH, std::string host_ = HOST, int port_ = PORT);
 
 	void startConnection();
 
