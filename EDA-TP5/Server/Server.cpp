@@ -87,8 +87,6 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 /*Called when there's been a connection.*/
 void Server::connection_callback(const boost::system::error_code& error) {
 	if (!error) {
-		std::cout << "Server says: Connection successful.\n";
-
 		//Sets socket to read request.
 		socket.async_read_some
 		(
@@ -178,7 +176,6 @@ std::string Server::generateTextResponse(bool isInputOk) {
 	std::string datePlusThirty = make_daytime_string(true);
 	std::string response;
 	if (isInputOk) {
-		std::cout << "Server says: sending OK input\n";
 		response =
 			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + HOST +
 			PATH + "\r\nCache-Control: max-age=30\r\nExpires:" +

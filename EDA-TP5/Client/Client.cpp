@@ -58,7 +58,7 @@ void Client::printDialogue(void) {
 		std::cout << error;
 }
 
-//Write_callback. Appends incoming message to this->message.
+//Write callback. Appends incoming message to this->message.
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData) {
 	std::cout << "Connection received. Got: " << size * nmemb << "bytes.\n";
 
