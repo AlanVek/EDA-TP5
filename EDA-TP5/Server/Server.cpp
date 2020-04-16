@@ -7,7 +7,6 @@
 
 using boost::asio::ip::tcp;
 #define HOST (std::string) "127.0.0.1"
-#define HOST2 (std::string) "192.168.1.35"
 #define PATH (std::string) "/img"
 #define FILENAME  "page.html"
 

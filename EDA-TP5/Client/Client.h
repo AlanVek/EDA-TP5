@@ -1,7 +1,6 @@
 #pragma once
 
 #include <curl/curl.h>
-#include <curl/easy.h>
 #include <string>
 
 #define HOST (std::string)"127.0.0.1"

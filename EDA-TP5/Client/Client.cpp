@@ -1,8 +1,8 @@
 #include "Client.h"
 #include <iostream>
 #include <string>
+#include <curl/easy.h>
 
-#define MAXSIZE 100;
 //Callback for when message is received.
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData);
 
@@ -40,7 +40,6 @@ void Client::configurateClient(void) {
 	if (handler && error == CURLE_OK) {
 		curl_easy_setopt(handler, CURLOPT_URL, (host + path).c_str());
 		curl_easy_setopt(handler, CURLOPT_PORT, port);
-		curl_easy_setopt(handler, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(handler, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
 		curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &write_callback);
 		curl_easy_setopt(handler, CURLOPT_WRITEDATA, this);
