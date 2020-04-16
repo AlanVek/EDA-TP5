@@ -1,18 +1,13 @@
 #include <iostream>
-//#include "Client.h"
 #include "Server.h"
 
 int main() {
 	boost::asio::io_context io_context;
 
+	//Creates instance of server.
 	Server myNewServer(io_context);
 
-	//Client myNewClient;
-
-	//myNewClient.startConnection();
-
-	//myNewClient.printDialogue();
-
+	//Runs server.
 	for (;;)
 		io_context.poll();
 

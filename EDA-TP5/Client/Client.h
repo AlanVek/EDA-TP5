@@ -4,7 +4,7 @@
 #include <curl/easy.h>
 #include <string>
 
-#define HOST (const char*)"localhost/img"
+#define HOST (const char*)"127.0.0.1/img"
 //#define PATH (std::string)"/img"
 #define PORT 80
 

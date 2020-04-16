@@ -45,7 +45,7 @@ void Client::printDialogue(void) {
 		std::cout << message << std::endl;
 	}
 	else
-		std::cout << "Failed to connect to server.\n";
+		std::cout << error;
 }
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData) {
@@ -53,9 +53,9 @@ size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData) {
 
 	Client* userDataPtr = (Client*)userData;
 
-	userDataPtr->getBuffer() = *ptr;
+	userDataPtr->getBuffer().append(ptr);
 
-	return userDataPtr->getBuffer().size();
+	return size * nmemb;
 }
 
 std::string& Client::getBuffer(void) { return message; }
