@@ -4,13 +4,12 @@
 #include <string>
 
 #define HOST (std::string)"127.0.0.1"
-#define PATH (std::string) "/img"
-#define PORT 80
+#define PATH (std::string) "/img/page.html"
 
 class Client
 {
 public:
-	Client(std::string path_ = PATH, std::string host_ = HOST, int port_ = PORT);
+	Client(std::string path_ = PATH, std::string host_ = HOST);
 
 	void startConnection();
 
@@ -23,7 +22,7 @@ public:
 private:
 
 	void configurateClient(void);
-	std::string path, host;
+	std::string path, host, filename;
 	int port;
 
 	std::string message;

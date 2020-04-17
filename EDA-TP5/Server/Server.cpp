@@ -6,9 +6,12 @@
 #include <fstream>
 
 using boost::asio::ip::tcp;
+
 #define HOST (std::string) "127.0.0.1"
-#define PATH (std::string) "/img"
-#define FILENAME  "page.html"
+#define PATH (std::string) "img"
+#define FILENAME (std::string) "page.html"
+
+#define TOT (HOST+'/'+PATH+'/'+FILENAME)
 
 std::string make_daytime_string(bool plusThirty);
 
@@ -61,7 +64,8 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 		std::string message(mess);
 
 		//Validator has the http protocol form.
-		std::string validator = "GET " + PATH + " HTTP/1.1\r\nHost: " + HOST + "\r\n";
+		std::string validator = "GET /" + PATH + '/' + FILENAME + " HTTP/1.1\r\nHost: " + HOST + "\r\n";
+
 		bool isInputOk = false;
 
 		//If there's been a match at the beggining of the request...
@@ -132,8 +136,10 @@ void Server::input_response(bool isInputOk) {
 	std::fstream page(FILENAME, std::ios::in | std::ios::binary);
 
 	/*Checks if file was correctly open.*/
-	if (!page.is_open())
+	if (!page.is_open()) {
+		std::cout << "Failed to open file\n";
 		return;
+	}
 
 	size = getFileLength(page);
 
@@ -176,8 +182,7 @@ std::string Server::generateTextResponse(bool isInputOk) {
 	std::string response;
 	if (isInputOk) {
 		response =
-			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + HOST +
-			PATH + "\r\nCache-Control: max-age=30\r\nExpires:" +
+			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + TOT + "\r\nCache-Control: max-age=30\r\nExpires:" +
 			datePlusThirty +
 			"Content-Length:" + std::to_string(size) +
 			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
@@ -186,8 +191,7 @@ std::string Server::generateTextResponse(bool isInputOk) {
 		std::cout << "Server says: sending NOT-OK input\n";
 
 		response =
-			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + HOST +
-			PATH + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
+			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + TOT + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
 			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
 	}
 

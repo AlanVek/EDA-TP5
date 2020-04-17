@@ -2,17 +2,23 @@
 #include <iostream>
 #include <string>
 #include <curl/easy.h>
+#include <fstream>
+
+#define PORT 80
 
 //Callback for when message is received.
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData);
 
 //Client constructor. Initializes CURL, and the easy mode. Calls client configuration.
-Client::Client(std::string path_, std::string host_, int port_) :
+Client::Client(std::string path_, std::string host_) :
 
-	path(path_), host(host_), port(port_)
+	path(path_), host(host_)
 {
+	port = PORT;
 	handler = nullptr;
 	error = curl_global_init(CURL_GLOBAL_ALL);
+
+	std::cout << host + '/' + path + '/' + filename << std::endl;
 
 	if (error == CURLE_OK) {
 		handler = curl_easy_init();
@@ -38,7 +44,7 @@ void Client::startConnection(void) {
 write the data gathered with write_callback into "this" client as userData.*/
 void Client::configurateClient(void) {
 	if (handler && error == CURLE_OK) {
-		curl_easy_setopt(handler, CURLOPT_URL, (host + path).c_str());
+		curl_easy_setopt(handler, CURLOPT_URL, (host + '/' + path + '/' + filename).c_str());
 		curl_easy_setopt(handler, CURLOPT_PORT, port);
 		curl_easy_setopt(handler, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
 		curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &write_callback);
@@ -49,9 +55,16 @@ void Client::configurateClient(void) {
 //Prints received messages.
 void Client::printDialogue(void) {
 	if (handler && error == CURLE_OK) {
-		std::cout << "The communication was:\n\n";
+		std::fstream myFile;
+		myFile.open("result.bin", std::ios::out | std::ios::binary);
+		if (!myFile.is_open()) {
+			std::cout << "Failed to create output file.\n";
+			myFile.close();
+			return;
+		}
+		myFile.write(message.c_str(), message.length() * sizeof(char));
 
-		std::cout << message << std::endl;
+		myFile.close();
 	}
 	else
 		std::cout << error;
