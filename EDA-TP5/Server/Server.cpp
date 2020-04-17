@@ -13,10 +13,10 @@ using boost::asio::ip::tcp;
 
 #define TOT (HOST+'/'+PATH+'/'+FILENAME)
 
-std::string make_daytime_string(bool plusThirty);
+std::string makeDaytimeString(bool plusThirty);
 
 /*Server constructor. Initializes io_context, acceptor and socket.
-Calls wait_for_connection to accept connections.*/
+Calls waitForConnection to accept connections.*/
 Server::Server(boost::asio::io_context& io_context_) :
 	io_context(io_context_), acceptor(io_context_, tcp::endpoint(tcp::v4(), 80)), socket(io_context_)
 {
@@ -24,11 +24,12 @@ Server::Server(boost::asio::io_context& io_context_) :
 		socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
 		socket.close();
 	}
-	wait_for_connection();
+	waitForConnection();
 }
 
 //Destructor. Closes open socket and acceptor.
 Server::~Server() {
+	std::cout << "\nClosing server.\n";
 	if (socket.is_open()) {
 		socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
 		socket.close();
@@ -36,36 +37,41 @@ Server::~Server() {
 
 	if (acceptor.is_open())
 		acceptor.close();
+
+	std::cout << "Server is closed.\n";
 }
 
 /*Sets acceptor to accept (asynchronously).*/
-void Server::wait_for_connection() {
-	std::cout << "Waiting for connection.\n";
-
+void Server::waitForConnection() {
 	if (socket.is_open()) {
 		std::cout << "Error: Can't accept new connection from an open socket" << std::endl;
 		return;
 	}
-	acceptor.async_accept(socket, boost::bind(&Server::connection_callback, this, boost::asio::placeholders::error));
+	if (acceptor.is_open()) {
+		std::cout << "Waiting for connection.\n";
+		acceptor.async_accept(socket, boost::bind(&Server::connectionCallback, this, boost::asio::placeholders::error));
+	}
 }
 
-//Closes socket.
+//Closes socket and clears message holder.
 void Server::closeConnection() {
-	std::cout << "Closing socket.\n";
-
 	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
 	socket.close();
+	int i = 0;
+	while (mess[i] != NULL) {
+		mess[i] = NULL;
+		i++;
+	}
 }
 
 /*Validates input given in GET request.*/
-void Server::input_validation(const boost::system::error_code& error, size_t bytes) {
+void Server::inputValidation(const boost::system::error_code& error, size_t bytes) {
 	if (!error) {
 		//Creates string message from request.
 		std::string message(mess);
 
 		//Validator has the http protocol form.
 		std::string validator = "GET /" + PATH + '/' + FILENAME + " HTTP/1.1\r\nHost: " + HOST + "\r\n";
-
 		bool isInputOk = false;
 
 		//If there's been a match at the beggining of the request...
@@ -77,9 +83,11 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 
 				isInputOk = true;
 		}
+		else
+			std::cout << "Client sent wrong input.\n";
 
 		//Generates response (according to validity of input).
-		input_response(isInputOk);
+		answer(isInputOk);
 	}
 
 	//If there's been an error, prints the message.
@@ -88,7 +96,7 @@ void Server::input_validation(const boost::system::error_code& error, size_t byt
 }
 
 /*Called when there's been a connection.*/
-void Server::connection_callback(const boost::system::error_code& error) {
+void Server::connectionCallback(const boost::system::error_code& error) {
 	if (!error) {
 		//Sets socket to read request.
 		socket.async_read_some
@@ -96,7 +104,7 @@ void Server::connection_callback(const boost::system::error_code& error) {
 			boost::asio::buffer(mess, MAXSIZE),
 			boost::bind
 			(
-				&Server::input_validation,
+				&Server::inputValidation,
 				this, boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred
 			)
@@ -107,18 +115,21 @@ void Server::connection_callback(const boost::system::error_code& error) {
 		std::cout << error.message() << std::endl;
 }
 /*Called when a message has been sent to client.*/
-void Server::sending_callback(const boost::system::error_code& error, size_t bytes_sent)
+void Server::messageCallback(const boost::system::error_code& error, size_t bytes_sent)
 {
 	if (!error)
-		std::cout << "Response sent. " << bytes_sent << " bytes." << std::endl;
+		std::cout << "Response sent correctly.\n\n";
 
 	else
-		std::cout << "Failed to respont to connection" << std::endl;
+		std::cout << "Failed to respond to connection\n\n";
+
+	/*Once the answer was sent, it frees acceptor for a new connection.*/
+	waitForConnection();
 }
 
 /*Returns daytime string. If plusThirty is true, it returns
 current daytime + 30 seconds.*/
-std::string make_daytime_string(bool plusThirty) {
+std::string makeDaytimeString(bool plusThirty) {
 	using namespace std::chrono;
 	system_clock::time_point theTime = system_clock::now();
 
@@ -131,7 +142,7 @@ std::string make_daytime_string(bool plusThirty) {
 }
 
 /*Responds to input.*/
-void Server::input_response(bool isInputOk) {
+void Server::answer(bool isInputOk) {
 	//Opens file.
 	std::fstream page(FILENAME, std::ios::in | std::ios::binary);
 
@@ -141,7 +152,7 @@ void Server::input_response(bool isInputOk) {
 		return;
 	}
 
-	size = getFileLength(page);
+	size = getFileSize(page);
 
 	/*Generates text response, according to validity of input.*/
 	response = generateTextResponse(isInputOk);
@@ -160,16 +171,15 @@ void Server::input_response(bool isInputOk) {
 		boost::asio::buffer(response),
 		boost::bind
 		(
-			&Server::sending_callback,
+			&Server::messageCallback,
 			this,
 			boost::asio::placeholders::error,
 			boost::asio::placeholders::bytes_transferred
 		)
 	);
 
-	/*Closes connection and frees acceptor again.*/
+	/*Closes socket*/
 	closeConnection();
-	wait_for_connection();
 
 	//Closes file.
 	page.close();
@@ -177,28 +187,26 @@ void Server::input_response(bool isInputOk) {
 
 /*Generates http response, according to validity of input.*/
 std::string Server::generateTextResponse(bool isInputOk) {
-	std::string date = make_daytime_string(false);
-	std::string datePlusThirty = make_daytime_string(true);
+	std::string date = makeDaytimeString(false);
+	std::string datePlusThirty = makeDaytimeString(true);
 	std::string response;
 	if (isInputOk) {
 		response =
 			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + TOT + "\r\nCache-Control: max-age=30\r\nExpires:" +
-			datePlusThirty +
-			"Content-Length:" + std::to_string(size) +
+			datePlusThirty + "Content-Length:" + std::to_string(size) +
 			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
 	}
 	else {
-		std::cout << "Server says: sending NOT-OK input\n";
-
 		response =
-			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + TOT + "\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty + "Content-Length: 0" +
-			" \r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
+			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + TOT +
+			"\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty +
+			"Content-Length: 0" + " \r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
 	}
 
 	return response;
 }
 /*Gets file length.*/
-size_t Server::getFileLength(std::fstream& file) {
+size_t Server::getFileSize(std::fstream& file) {
 	file.seekg(0, file.end);
 
 	size_t length = file.tellg();

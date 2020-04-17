@@ -13,7 +13,7 @@ public:
 
 	void startConnection();
 
-	void printDialogue(void);
+	void saveDialogue(void);
 
 	std::string& getBuffer(void);
 
@@ -22,7 +22,7 @@ public:
 private:
 
 	void configurateClient(void);
-	std::string path, host, filename;
+	std::string path, host;
 	int port;
 
 	std::string message;

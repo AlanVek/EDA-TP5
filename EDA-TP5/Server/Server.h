@@ -12,21 +12,18 @@ public:
 
 	~Server();
 private:
-	void wait_for_connection(void);
+	void waitForConnection(void);
 	void closeConnection(void);
 
-	//void input_validation(std::string& input);
-	void input_validation(const boost::system::error_code& error, size_t bytes);
+	void inputValidation(const boost::system::error_code& error, size_t bytes);
 
-	size_t getFileLength(std::fstream& file);
+	size_t getFileSize(std::fstream& file);
 
-	void input_response(bool isInputOk);
+	void answer(bool isInputOk);
 	std::string generateTextResponse(bool);
 
-	void connection_callback(const boost::system::error_code& error);
-	void sending_callback(const boost::system::error_code& error, size_t bytes_sent);
-
-	//int getFileLenght(std::fstream file);
+	void connectionCallback(const boost::system::error_code& error);
+	void messageCallback(const boost::system::error_code& error, size_t bytes_sent);
 
 	boost::asio::io_context& io_context;
 	boost::asio::ip::tcp::acceptor acceptor;

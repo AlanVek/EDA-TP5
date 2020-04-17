@@ -7,7 +7,7 @@
 #define PORT 80
 
 //Callback for when message is received.
-size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData);
+size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData);
 
 //Client constructor. Initializes CURL, and the easy mode. Calls client configuration.
 Client::Client(std::string path_, std::string host_) :
@@ -16,9 +16,8 @@ Client::Client(std::string path_, std::string host_) :
 {
 	port = PORT;
 	handler = nullptr;
-	error = curl_global_init(CURL_GLOBAL_ALL);
 
-	std::cout << host + '/' + path + '/' + filename << std::endl;
+	error = curl_global_init(CURL_GLOBAL_ALL);
 
 	if (error == CURLE_OK) {
 		handler = curl_easy_init();
@@ -44,36 +43,38 @@ void Client::startConnection(void) {
 write the data gathered with write_callback into "this" client as userData.*/
 void Client::configurateClient(void) {
 	if (handler && error == CURLE_OK) {
-		curl_easy_setopt(handler, CURLOPT_URL, (host + '/' + path + '/' + filename).c_str());
+		curl_easy_setopt(handler, CURLOPT_URL, (host + '/' + path).c_str());
 		curl_easy_setopt(handler, CURLOPT_PORT, port);
 		curl_easy_setopt(handler, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
-		curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &write_callback);
+		curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &writeCallback);
 		curl_easy_setopt(handler, CURLOPT_WRITEDATA, this);
 	}
 }
 
 //Prints received messages.
-void Client::printDialogue(void) {
+void Client::saveDialogue(void) {
 	if (handler && error == CURLE_OK) {
-		std::fstream myFile;
-		myFile.open("result.bin", std::ios::out | std::ios::binary);
-		if (!myFile.is_open()) {
-			std::cout << "Failed to create output file.\n";
+		if (message.length() > 0) {
+			std::fstream myFile;
+			myFile.open("result.bin", std::ios::out | std::ios::binary);
+			if (!myFile.is_open()) {
+				std::cout << "Failed to create output file.\n";
+				myFile.close();
+				return;
+			}
+			myFile.write(message.c_str(), message.length() * sizeof(char));
 			myFile.close();
-			return;
+			std::cout << "Message received correctly. Got " << message.size() << " bytes.\n";
 		}
-		myFile.write(message.c_str(), message.length() * sizeof(char));
-
-		myFile.close();
+		else
+			std::cout << "Got 404 error.\n";
 	}
 	else
 		std::cout << error;
 }
 
 //Write callback. Appends incoming message to this->message.
-size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userData) {
-	std::cout << "Connection received. Got: " << size * nmemb << "bytes.\n";
-
+size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData) {
 	Client* userDataPtr = (Client*)userData;
 
 	userDataPtr->getBuffer().append(ptr);
