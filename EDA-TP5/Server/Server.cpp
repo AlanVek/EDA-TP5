@@ -9,7 +9,7 @@ using boost::asio::ip::tcp;
 
 #define HOST (std::string) "127.0.0.1"
 #define PATH (std::string) "img"
-#define FILENAME (std::string) "page.html"
+#define FILENAME (std::string) "page/page.html"
 
 #define TOT (HOST+'/'+PATH+'/'+FILENAME)
 
