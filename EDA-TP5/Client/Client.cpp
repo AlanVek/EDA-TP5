@@ -4,17 +4,12 @@
 #include <curl/easy.h>
 #include <fstream>
 
-#define PORT 80
-
 //Callback for when message is received.
 size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData);
 
 //Client constructor. Initializes CURL, and the easy mode. Calls client configuration.
-Client::Client(std::string path_, std::string host_) :
-
-	path(path_), host(host_)
+Client::Client(std::string host_, std::string path_, int port_) : host(host_), path(path_), port(port_)
 {
-	port = PORT;
 	handler = nullptr;
 
 	error = curl_global_init(CURL_GLOBAL_ALL);

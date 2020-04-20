@@ -21,9 +21,15 @@
     <ClCompile Include="main_client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DataInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
