@@ -11,7 +11,7 @@ int main() {
 	Server myNewServer(io_context);
 
 	//Runs server for one minute.
-	io_context.run_until(system_clock::now() + minutes(1));
+	io_context.run_until(system_clock::now() + seconds(30));
 
 	return 0;
 }

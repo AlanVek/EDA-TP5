@@ -2,8 +2,6 @@
 #include "Client.h"
 #include "DataInput.h"
 
-#define MAXSIZE 1000
-
 int main(int argC, char** argV) {
 	Location userData;
 
