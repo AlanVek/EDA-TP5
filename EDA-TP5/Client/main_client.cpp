@@ -9,7 +9,7 @@ int main(int argC, char** argV) {
 
 	int result = -1;
 
-	if (getData(argV[1], argC, &userData)) {
+	if (getData(argV, argC, &userData)) {
 		result = 0;
 		//Creates instance of client.
 		Client myNewClient(userData.host, userData.path, 80);

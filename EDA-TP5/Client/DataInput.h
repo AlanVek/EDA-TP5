@@ -6,4 +6,4 @@ typedef struct {
 	std::string path;
 } Location;
 
-bool getData(char*, int, void*);
+bool getData(char**, int, void*);

@@ -5,7 +5,7 @@
 #define EXPECTEDPARAMS 2
 
 /*Separates data into host and path/filename. Returns true if data is valid, otherwise it returns false.*/
-bool getData(char* argV, int argC, void* userData) {
+bool getData(char** argV, int argC, void* userData) {
 	Location* userDataPtr = (Location*)userData;
 
 	bool result = false;
@@ -14,7 +14,7 @@ bool getData(char* argV, int argC, void* userData) {
 
 	//If the amount of arguments is correct...
 	if (argC == EXPECTEDPARAMS) {
-		data = argV;
+		data = argV[1];
 		result = true;
 
 		//Searches for '/' symbol.
