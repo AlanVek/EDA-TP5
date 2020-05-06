@@ -4,6 +4,8 @@
 #include <fstream>
 #include "Errors.h"
 
+const int fileNameSize = 10;
+
 //Callback for when message is received.
 size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData);
 
@@ -16,7 +18,10 @@ Client::Client(std::string host_, std::string path_, int port_) : host(host_), p
 
 	if (error == CURLE_OK) {
 		handler = curl_easy_init();
-		configurateClient();
+		if (handler)
+			configurateClient();
+		else
+			throw (Error("Failed to initialize handler.\n"));
 	}
 	else
 		throw(Error("Failed to set Curl.\n"));
@@ -24,29 +29,26 @@ Client::Client(std::string host_, std::string path_, int port_) : host(host_), p
 
 //Client destructor.
 Client::~Client() {
-	if (handler) {
-		curl_easy_cleanup(handler);
-		curl_global_cleanup();
-	}
+	curl_easy_cleanup(handler);
+	curl_global_cleanup();
 	message.close();
 }
 
 //After initial setup, activates the handler.
 void Client::startConnection(void) {
-	if (handler && error == CURLE_OK)
-		error = curl_easy_perform(handler);
+	error = curl_easy_perform(handler);
+	if (error != CURLE_OK)
+		throw(Error("Bad connection.\n"));
 }
 
 /*Configurates client to send a GET request to server and
 write the data gathered with write_callback into "this" client as userData.*/
 void Client::configurateClient(void) {
-	if (handler && error == CURLE_OK) {
-		curl_easy_setopt(handler, CURLOPT_URL, (host + '/' + path).c_str());
-		curl_easy_setopt(handler, CURLOPT_PORT, port);
-		curl_easy_setopt(handler, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
-		curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &writeCallback);
-		curl_easy_setopt(handler, CURLOPT_WRITEDATA, this);
-	}
+	curl_easy_setopt(handler, CURLOPT_URL, (host + '/' + path).c_str());
+	curl_easy_setopt(handler, CURLOPT_PORT, port);
+	curl_easy_setopt(handler, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
+	curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, &writeCallback);
+	curl_easy_setopt(handler, CURLOPT_WRITEDATA, this);
 }
 
 //Write callback. Appends incoming message to this->message.
@@ -68,7 +70,7 @@ std::fstream& Client::getBuffer(void) { return message; }
 
 void Client::openFile(void) {
 	std::string filename;
-	std::string tempfile;
+	std::string ctnt;
 	int pos = path.find_last_of('.');
 
 	auto removeBar = [](std::string& name) {std::string temp; for (auto x : name) { if (x != '/') temp += x; } return temp; };
@@ -76,18 +78,19 @@ void Client::openFile(void) {
 	error = curl_easy_getinfo(handler, CURLINFO_CONTENT_TYPE, &contentType);
 
 	if (error == CURLE_OK) {
-		if (pos == std::string::npos || pos == path.length()) {
-			filename = removeBar(host);
-			filename = filename.substr(filename.length() - 10, 10);
-		}
+		ctnt = contentType;
+
+		if (pos == std::string::npos || pos == path.length())
+			filename = removeBar(path);
+
 		else {
 			filename = path.substr(0, pos);
 			filename = removeBar(filename);
-			if (filename.length() > 10)
-				filename = filename.substr(filename.length() - 10, 10);
 		}
 
-		std::string ctnt = contentType;
+		if (filename.length() > fileNameSize)
+			filename = filename.substr(filename.length() - fileNameSize, fileNameSize);
+
 		pos = ctnt.find('/');
 		ctnt = ctnt.substr(pos + 1, ctnt.length() - pos);
 
