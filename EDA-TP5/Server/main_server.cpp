@@ -12,6 +12,4 @@ int main() {
 
 	//Runs server for one minute.
 	io_context.run_until(system_clock::now() + seconds(30));
-
-	return 0;
 }

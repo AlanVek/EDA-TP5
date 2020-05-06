@@ -10,6 +10,7 @@ using boost::asio::ip::tcp;
 #define HOST (std::string) "127.0.0.1"
 #define PATH (std::string) "img"
 #define FILENAME (std::string) "page/page.html"
+#define TYPE "text/html"
 
 #define TOT (HOST+'/'+PATH+'/'+FILENAME)
 
@@ -51,6 +52,7 @@ void Server::waitForConnection() {
 		std::cout << "Waiting for connection.\n";
 		acceptor.async_accept(socket, boost::bind(&Server::connectionCallback, this, boost::asio::placeholders::error));
 	}
+	response.clear();
 }
 
 //Closes socket and clears message holder.
@@ -194,13 +196,13 @@ std::string Server::generateTextResponse(bool isInputOk) {
 		response =
 			"HTTP/1.1 200 OK\r\nDate:" + date + "Location: " + TOT + "\r\nCache-Control: max-age=30\r\nExpires:" +
 			datePlusThirty + "Content-Length:" + std::to_string(size) +
-			"\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
+			"\r\nContent-Type: " + TYPE + "; charset=iso-8859-1\r\n\r\n";
 	}
 	else {
 		response =
 			"HTTP/1.1 404 Not Found\r\nDate:" + date + "Location: " + TOT +
 			"\r\nCache-Control: public, max-age=30 \r\nExpires:" + datePlusThirty +
-			"Content-Length: 0" + " \r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n";
+			"Content-Length: 0" + " \r\nContent-Type: " + TYPE + "; charset=iso-8859-1\r\n\r\n";
 	}
 
 	return response;

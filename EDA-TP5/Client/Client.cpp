@@ -1,8 +1,8 @@
 #include "Client.h"
 #include <iostream>
-#include <string>
 #include <curl/easy.h>
 #include <fstream>
+#include "Errors.h"
 
 //Callback for when message is received.
 size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData);
@@ -18,14 +18,17 @@ Client::Client(std::string host_, std::string path_, int port_) : host(host_), p
 		handler = curl_easy_init();
 		configurateClient();
 	}
+	else
+		throw(Error("Failed to set Curl.\n"));
 }
 
 //Client destructor.
 Client::~Client() {
-	if (handler && error == CURLE_OK) {
+	if (handler) {
 		curl_easy_cleanup(handler);
 		curl_global_cleanup();
 	}
+	message.close();
 }
 
 //After initial setup, activates the handler.
@@ -46,36 +49,54 @@ void Client::configurateClient(void) {
 	}
 }
 
-//Prints received messages.
-void Client::saveDialogue(void) {
-	if (handler && error == CURLE_OK) {
-		if (message.length() > 0) {
-			std::fstream myFile;
-			myFile.open("result.bin", std::ios::out | std::ios::binary);
-			if (!myFile.is_open()) {
-				std::cout << "Failed to create output file.\n";
-				myFile.close();
-				return;
-			}
-			myFile.write(message.c_str(), message.length() * sizeof(char));
-			myFile.close();
-			std::cout << "Message received correctly. Got " << message.size() << " bytes.\n";
-		}
-		else
-			std::cout << "Got 404 error.\n";
-	}
-	else
-		std::cout << error;
-}
-
 //Write callback. Appends incoming message to this->message.
 size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userData) {
 	Client* userDataPtr = (Client*)userData;
 
-	userDataPtr->getBuffer().append(ptr);
+	std::fstream& output = userDataPtr->getBuffer();
+
+	if (!output.is_open())
+		userDataPtr->openFile();
+
+	output.write(ptr, nmemb);
 
 	return size * nmemb;
 }
 
 //Message getter.
-std::string& Client::getBuffer(void) { return message; }
+std::fstream& Client::getBuffer(void) { return message; }
+
+void Client::openFile(void) {
+	std::string filename;
+	std::string tempfile;
+	int pos = path.find_last_of('.');
+
+	auto removeBar = [](std::string& name) {std::string temp; for (auto x : name) { if (x != '/') temp += x; } return temp; };
+
+	error = curl_easy_getinfo(handler, CURLINFO_CONTENT_TYPE, &contentType);
+
+	if (error == CURLE_OK) {
+		if (pos == std::string::npos || pos == path.length()) {
+			filename = removeBar(host);
+			filename = filename.substr(filename.length() - 10, 10);
+		}
+		else {
+			filename = path.substr(0, pos);
+			filename = removeBar(filename);
+			if (filename.length() > 10)
+				filename = filename.substr(filename.length() - 10, 10);
+		}
+
+		std::string ctnt = contentType;
+		pos = ctnt.find('/');
+		ctnt = ctnt.substr(pos + 1, ctnt.length() - pos);
+
+		message.open((filename + '.' + ctnt).c_str(), std::ios::out | std::ios::binary);
+		if (!message.is_open()) {
+			message.close();
+			throw(Error("Failed to create output file.\n"));
+		}
+	}
+	else
+		throw(Error("Failed to get content type.\n"));
+}

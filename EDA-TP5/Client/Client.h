@@ -2,6 +2,7 @@
 
 #include <curl/curl.h>
 #include <string>
+#include <fstream>
 
 #define HOST (std::string)"127.0.0.1"
 #define PATH (std::string) "/img/page/page.html"
@@ -14,18 +15,20 @@ public:
 
 	void startConnection();
 
-	void saveDialogue(void);
-
-	std::string& getBuffer(void);
+	std::fstream& getBuffer(void);
 
 	~Client();
+
+	void openFile(void);
 
 private:
 	void configurateClient(void);
 	std::string path, host;
 	int port;
 
-	std::string message;
+	char* contentType;
+
+	std::fstream message;
 	CURL* handler;
 	CURLcode error;
 };
